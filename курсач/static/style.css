@@ -1,0 +1,141 @@
+/* Основной фон и шрифт */
+body {
+    background-color: #0b1a10; /* Темно-зеленый/черный */
+    color: #e0e0e0;
+    font-family: 'Inter', sans-serif;
+    margin: 0; padding: 20px;
+}
+
+/* Сетка как на твоем макете */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Общий стиль карточек (блоков) */
+.card {
+    background-color: #1a3a2a; /* Зеленоватый фон блоков */
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+h2 { color: #2ecc71; margin-top: 0; font-size: 1.5em; text-align: center; }
+
+/* Кнопки */
+.btn {
+    background-color: #2ecc71;
+    color: #0b1a10;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    width: 100%;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+
+.btn:hover { background-color: #27ae60; }
+
+/* Поля ввода */
+input {
+    width: 95%;
+    padding: 12px;
+    margin-bottom: 15px;
+    background: #0b1a10;
+    border: 1px solid #2ecc71;
+    border-radius: 6px;
+    color: white;
+}
+
+/* Сетка книг в поиске */
+.book-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.book-item {
+    background: #234d38;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.8em;
+}
+
+.photo-placeholder {
+    width: 100%;
+    height: 80px;
+    background: #112b1d;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Оформление таблицы статистики */
+#statsTable {
+    width: 100%;
+    border-collapse: collapse; /* Убирает двойные рамки */
+    margin-top: 10px;
+    background-color: #0b1a10;
+    color: #e0e0e0;
+    font-size: 0.95em;
+}
+
+#statsTable th {
+    background-color: #2ecc71; /* Шапка таблицы ярко-зеленая */
+    color: #0b1a10;            /* Текст в шапке черный для контраста */
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#statsTable td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #1a3a2a; /* Тонкая разделительная линия */
+}
+
+/* Эффект зебры (чередование цветов строк) */
+#statsTable tr:nth-child(even) {
+    background-color: #112b1d;
+}
+
+/* Подсветка строки при наведении */
+#statsTable tr:hover {
+    background-color: #1a3a2a;
+    transition: 0.2s;
+}
+
+/* Оформление статусов внутри таблицы */
+.status-tag {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+
+
+.auth-container { height: 100vh; display: flex; align-items: center; justify-content: center; }
+.auth-card { width: 350px; }
+
+.main-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2ecc71; margin-bottom: 30px; }
+.profile-btn { background: #2ecc71; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+
+.book-card { background: #1a3a2a; padding: 15px; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+.book-card:hover { transform: translateY(-5px); border: 1px solid #2ecc71; }
+.book-img { font-size: 40px; text-align: center; margin-bottom: 10px; }
+.status { font-size: 0.8em; padding: 3px 8px; border-radius: 4px; }
+.status-ok { background: #27ae60; color: white; }
+.status-bad { background: #c0392b; color: white; }
+
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal-card { background: #1a3a2a; padding: 30px; border-radius: 15px; min-width: 400px; border: 1px solid #2ecc71; }

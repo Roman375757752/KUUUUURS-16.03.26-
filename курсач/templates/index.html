@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Библиотечный фонд города</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Дополнительные стили для новых функций */
+        #main-ui, #reg-box, #profile-modal, #book-modal, #employee-panel { display: none; }
+        .hidden { display: none !important; }
+        .auth-card { width: 400px; margin: auto; }
+        .admin-panel { 
+            background: #1a3a2a; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            border: 2px solid #2ecc71; 
+        }
+        .stats-grid { display: flex; gap: 15px; margin-bottom: 15px; }
+        .stat-card { 
+            background: #0b1a10; 
+            padding: 10px; 
+            flex: 1; 
+            border-radius: 8px; 
+            text-align: center; 
+            border: 1px solid #2ecc71;
+        }
+        .add-book-form { display: flex; gap: 10px; }
+        .add-book-form input { margin-bottom: 0; }
+        select.btn { text-align: left; background: #0b1a10; color: white; border: 1px solid #2ecc71; }
+    </style>
+</head>
+<body>
+
+    <!-- ЭКРАН 1: АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ -->
+    <div id="auth-screen" class="auth-container">
+        
+        <!-- Окно Входа -->
+        <div id="login-box" class="card auth-card">
+            <h2>Вход в систему</h2>
+            <input type="text" id="loginInput" placeholder="Введите ФИО">
+            <div style="margin-bottom: 15px; font-size: 0.9em; display: flex; flex-direction:column; gap: 8px;">
+                <label style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" id="isEmployee" style="width:auto; margin:0;"> Я сотрудник библиотеки
+                </label>
+                <label style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" id="isAdmin" style="width:auto; margin:0;"> Я администратор
+                </label>
+            </div>
+            <button onclick="handleLogin()" class="btn">Войти</button>
+            <p style="text-align:center; font-size:0.8em; margin-top:15px;">
+                Нет аккаунта? <a href="#" onclick="toggleAuth(false)" style="color:#2ecc71">Регистрация читателя</a>
+            </p>
+            <p id="errorLog" style="color:#ff4d4d; text-align:center; margin-top:10px;"></p>
+        </div>
+
+        <!-- Окно Регистрации -->
+        <div id="reg-box" class="card auth-card">
+            <h2>Регистрация читателя</h2>
+            <input type="text" id="regName" placeholder="ФИО полностью">
+            <select id="regCat" class="btn" style="margin-bottom: 10px; width: 100%;">
+                <option value="1">Студент</option>
+                <option value="2">Научный работник</option>
+                <option value="5">Преподаватель</option>
+                <option value="3">Школьник</option>
+                <option value="4">Пенсионер</option>
+            </select>
+            <input type="text" id="regInst" placeholder="ВУЗ (для студентов)">
+            <input type="text" id="regOrg" placeholder="Организация (для ученых/рабочих)">
+            <button onclick="handleRegister()" class="btn">Создать аккаунт</button>
+            <p style="text-align:center; font-size:0.8em; margin-top:15px;">
+                Уже есть аккаунт? <a href="#" onclick="toggleAuth(true)" style="color:#2ecc71">Вернуться ко входу</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 2: ГЛАВНЫЙ ИНТЕРФЕЙС -->
+    <div id="main-ui" class="container">
+        <header class="main-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 2px solid #2ecc71; margin-bottom: 20px;">
+            <h1>Библиотечный фонд города</h1>
+            <button onclick="openProfileModal('profile-modal', true)" class="profile-btn">👤 Мой профиль</button>
+        </header>
+
+        <!-- ПАНЕЛЬ СОТРУДНИКА (видна только им) -->
+        <div id="employee-panel" class="admin-panel">
+            <h3>Панель управления фондом</h3>
+            <div style="max-width:300px; margin-bottom:20px;">
+                <canvas id="statusChart"></canvas>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card" onclick="showStatsTable('all')" style="cursor:pointer">Экземпляров в базе: <br><b id="statTotal">0</b></div>
+                <div class="stat-card" onclick="showStatsTable('active')" style="cursor:pointer">Книг на руках: <br><b id="statActive">0</b></div>
+            </div>
+            <h4>Добавить новое издание</h4>
+            <div class="add-book-form" style="display:flex; flex-direction:column; gap:10px">
+                <div style="display:flex; gap:10px">
+                    <input type="text" id="newBookTitle" placeholder="Название" style="flex:2">
+                    <input type="number" id="newBookYear" placeholder="Год" style="width:100px">
+                </div>
+                <div style="display:flex; gap:10px; align-items:flex-start;">
+                    <div style="flex:2; display:flex; flex-direction:column; gap:6px;">
+                        <select id="newBookAuthor" class="btn">
+                            <option value="">— Выбрать из списка —</option>
+                            <option value="1">Смирнов А.В.</option>
+                            <option value="2">Козлова И.Н.</option>
+                            <option value="3">Петров Д.С.</option>
+                            <option value="5">Лихачёв Д.С.</option>
+                        </select>
+                        <input type="text" id="newAuthorName" placeholder="Или введите автора вручную">
+                    </div>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+                        <select id="newBookType" class="btn">
+                            <option value="Книга">Книга</option>
+                            <option value="Журнал">Журнал</option>
+                            <option value="Диссертация">Диссертация</option>
+                            <option value="Газета">Газета</option>
+                            <option value="Сборник статей">Сборник статей</option>
+                        </select>
+                        <button onclick="addNewBook()" class="btn" style="margin:0">Добавить</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Внутри блока employee-panel -->
+            <div class="card" style="background: #0b1a10; margin-top: 15px;">
+                <h4>Выдача книги по коду</h4>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="issueCode" placeholder="LIB-0000" style="margin:0">
+                    <button onclick="issueByCode()" class="btn" style="width:120px; margin:0">Выдать</button>
+                </div>
+            </div>
+
+            <h4>Новые заказы (нужно собрать):</h4>
+            <div id="bookingList" style="background: #0b1a10; padding: 10px; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                <!-- Сюда JS будет вставлять строки с бронями -->
+            </div>
+
+            <div class="card" style="background:#0b1a10; margin-top:15px;">
+                <h4>Отчёты</h4>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    <button class="btn" style="margin:0;" onclick="downloadReport('daily_issues')">Ежедневная выдача</button>
+                    <button class="btn" style="margin:0;" onclick="downloadReport('daily_returns')">Ежедневные возвраты</button>
+                    <button class="btn" style="margin:0;" onclick="downloadReport('weekly_load')">Недельная загруженность</button>
+                    <button class="btn" style="margin:0;" onclick="downloadReport('writeoff_act')">Акт списания</button>
+                    <button class="btn" style="margin:0;" onclick="showStatsTable('writtenoff')">Списанные экземпляры</button>
+                    <button class="btn" style="margin:0;" onclick="downloadExcelReport('all_copies')">Excel: все экземпляры</button>
+                    <button class="btn" style="margin:0;" onclick="downloadExcelReport('issues_history')">Excel: история выдач</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ПАНЕЛЬ АДМИНИСТРАТОРА (видна только админам) -->
+        <div id="admin-panel" class="admin-panel" style="display:none; border-color:#9b59b6;">
+            <h3>Панель администратора</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                <button class="btn" style="margin:0;" onclick="loadAdminTable('readers')">Читатели</button>
+                <button class="btn" style="margin:0;" onclick="loadAdminTable('employees')">Сотрудники</button>
+                <button class="btn" style="margin:0;" onclick="loadAdminTable('logreaders')">Логи читателей</button>
+            </div>
+            <div style="max-height:260px; overflow-y:auto; background:#0b1a10; padding:10px; border-radius:8px;">
+                <table id="adminTable" style="width:100%; border-collapse: collapse; font-size:0.9em"></table>
+            </div>
+        </div>
+
+
+        <!-- КАТАЛОГ КНИГ -->
+        <div class="card" style="margin-bottom:20px; padding:10px; background:#0b1a10;">
+            <input type="text" id="searchInput" placeholder="Поиск по названию..." 
+                   oninput="applyCatalogFilters()" 
+                   style="width:60%; margin-right:10px;">
+            <button class="btn" style="margin:2px;" onclick="setCategoryFilter('all')">Все</button>
+            <button class="btn" style="margin:2px;" onclick="setCategoryFilter('Книга')">Книги</button>
+            <button class="btn" style="margin:2px;" onclick="setCategoryFilter('Журнал')">Журналы</button>
+            <button class="btn" style="margin:2px;" onclick="setCategoryFilter('Диссертация')">Диссертации</button>
+            <button class="btn" style="margin:2px;" onclick="setCategoryFilter('Газета')">Газеты</button>
+            <button class="btn" style="margin:2px;" onclick="setCategoryFilter('Сборник статей')">Сборники статей</button>
+        </div>
+        <div class="book-grid">
+            {% for book in books %}
+            <div class="book-card" 
+                 onclick="showBook('{{ book.title }}', '{{ book.author_name }}', '{{ book.inventory_number }}', '{{ book.status }}')" 
+                 data-title="{{ book.title|lower }}" 
+                 data-type="{{ book.category_name }}">
+
+                <div class="book-img">📖</div>
+                <h3>{{ book.title }}</h3>
+                <p style="font-size:0.85em; color:#bdc3c7; min-height:1.5em;">{{ book.author_name }}</p>
+                <span class="status {% if book.status == 'в наличии' %}status-ok{% else %}status-bad{% endif %}">
+                    {{ book.status }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО: ИНФОРМАЦИЯ О КНИГЕ -->
+    <!-- МОДАЛЬНОЕ ОКНО КНИГИ: Оставь только одну кнопку -->
+    <div id="book-modal" class="modal-overlay" onclick="toggleModal('book-modal', false)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <h2 id="bTitle" style="color: #2ecc71;"></h2>
+            <p><b>Автор:</b> <span id="bAuthor"></span></p>
+            <p><b>Инвентарный номер:</b> <span id="bInv"></span></p>
+            <p><b>Статус:</b> <span id="bStatus"></span></p>
+            <hr border="1" color="#2ecc71" style="margin: 15px 0;">
+            
+            <!-- ОДНА КНОПКА С ПРАВИЛЬНЫМ ID -->
+            <button id="reserveBtn" class="btn" onclick="makeBooking()">Забронировать книгу</button>
+            
+            <button onclick="toggleModal('book-modal', false)" class="btn" style="background: #555; color: white;">Закрыть</button>
+        </div>
+    </div>
+
+
+    <div id="stats-modal" class="modal-overlay" onclick="toggleModal('stats-modal', false)">
+        <div class="modal-card" style="width:80%; max-width:900px" onclick="event.stopPropagation()">
+            <h2 id="statsTitle">Статистика</h2>
+            <div id="statsSearchBox" style="display:none; margin: 10px 0;">
+                <input id="statsSearchInput" type="text" placeholder="Поиск по читателю / названию / инв. №"
+                       oninput="applyStatsSearchFilter()"
+                       style="width:100%; margin:0;">
+            </div>
+            <div style="max-height:400px; overflow-y:auto; background:#0b1a10; padding:10px">
+                <table id="statsTable" style="width:100%; border-collapse: collapse; font-size:0.9em">
+                    <!-- Сюда вставится таблица -->
+                </table>
+            </div>
+            <button onclick="toggleModal('stats-modal', false)" class="btn" style="margin-top:20px">Закрыть</button>
+        </div>
+    </div>
+
+
+    <!-- МОДАЛЬНОЕ ОКНО ПРОФИЛЯ: Добавь блок для броней -->
+<div id="profile-modal" class="modal-overlay" onclick="toggleModal('profile-modal', false)">
+    <div class="modal-card" onclick="event.stopPropagation()" style="max-width: 600px;">
+        <h2 style="color: #2ecc71; margin-top:0">Личный кабинет</h2>
+        <p><b>ФИО:</b> <span id="uName"></span></p>
+        <p><b>Статус:</b> <span id="uOrg"></span></p>
+        <p><b>Штраф:</b> <span id="uFine">0</span> ₽</p>
+
+        <!-- РАЗДЕЛ БРОНИРОВАНИЙ -->
+        <div style="margin-top:20px; border-top: 1px solid #2ecc71; padding-top:10px;">
+            <h4 style="color: #f1c40f; margin-bottom:10px;">🕒 Мои бронирования (Коды)</h4>
+            <div id="userActiveBookings" style="background:#0b1a10; padding:10px; border-radius:8px; font-size:0.9em; max-height:120px; overflow-y:auto;">
+                <!-- Сюда JS вставит брони -->
+            </div>
+        </div>
+
+        <!-- РАЗДЕЛ ВЫДАННЫХ КНИГ -->
+        <div style="margin-top:20px; border-top: 1px solid #2ecc71; padding-top:10px;">
+            <h4 style="color: #2ecc71; margin-bottom:10px;">📚 Книги на руках</h4>
+            <div id="userActiveIssues" style="background:#0b1a10; padding:10px; border-radius:8px; font-size:0.9em; max-height:120px; overflow-y:auto;">
+                <!-- Сюда JS вставит выданные книги -->
+            </div>
+        </div>
+
+        <!-- ИСТОРИЯ ЧТЕНИЙ -->
+        <div style="margin-top:20px; border-top: 1px solid #2ecc71; padding-top:10px;">
+            <h4 style="color: #95a5a6; margin-bottom:10px;">📖 История чтений</h4>
+            <div id="userHistoryIssues" style="background:#0b1a10; padding:10px; border-radius:8px; font-size:0.9em; max-height:150px; overflow-y:auto;">
+                <!-- Сюда JS вставит историю -->
+            </div>
+        </div>
+
+        <button onclick="logout()" class="btn" style="background: #e74c3c; color: white; margin-top:20px;">Выйти из системы</button>
+    </div>
+</div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
