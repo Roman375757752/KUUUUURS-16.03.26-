@@ -549,7 +549,7 @@ async function loadReaderProfileData() {
         const res = await fetch(`/get_reader_info/${userData.id_reader}`);
         const data = await res.json();
 
-        // 1. Отрисовка Бронирований
+        // 1. Отрисовка Бронирований    
         let bHtml = '';
         data.bookings.forEach(b => {
             const statusColor = b.status === 'собран' ? '#2ecc71' : '#f1c40f';
